@@ -5,6 +5,7 @@
     "output": "release",
     "buildResources": "resources"
   },
+  "afterPack": "scripts/after-pack-windows-icon.cjs",
   "files": [
     "electron/**/*",
     "resources/**/*",
@@ -12,11 +13,14 @@
   ],
   "win": {
     "target": ["nsis"],
-    "icon": "resources/icon.png",
+    "icon": "resources/icon.ico",
     "signAndEditExecutable": false,
     "artifactName": "CalmCampus-Setup-${version}.${ext}"
   },
   "nsis": {
+    "installerIcon": "resources/icon.ico",
+    "uninstallerIcon": "resources/icon.ico",
+    "installerHeaderIcon": "resources/icon.ico",
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,

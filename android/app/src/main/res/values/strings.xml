@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CalmCampus</string>
+    <string name="title_activity_main">CalmCampus</string>
+    <string name="package_name">com.calmcampus.app</string>
+    <string name="custom_url_scheme">com.calmcampus.app</string>
+</resources>
