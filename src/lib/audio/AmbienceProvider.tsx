@@ -74,8 +74,10 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedForSessionRef = useRef(false);
-  const wasOnBeforeSessionRef = useRef(false);
+  const wasPlayingBeforeSessionRef = useRef(false);
+  const userTurnedOffDuringSessionRef = useRef(false);
   const currentUserRef = useRef<string | null>(null);
+  const prefsRef = useRef<AmbiencePrefs>(DEFAULT_PREFS);
 
   const [prefs, setPrefs] = useState<AmbiencePrefs>(DEFAULT_PREFS);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -94,6 +96,12 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
       // Fallback in case loop fails — restart from 0
       try { a.currentTime = 0; void a.play(); } catch { }
     });
+    a.addEventListener("error", () => {
+      console.warn("[CalmCampus audio] Ambience audio failed to load", {
+        src: a.currentSrc || a.src,
+        error: a.error ? { code: a.error.code, message: a.error.message } : null,
+      });
+    });
     a.addEventListener("play", () => setIsPlaying(true));
     a.addEventListener("pause", () => setIsPlaying(false));
     audioRef.current = a;
@@ -109,6 +117,7 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
 
   const playCurrent = useCallback((p: AmbiencePrefs) => {
     if (!p.on) return;
+    if (pausedForSessionRef.current) return;
     const a = ensureAudio(); if (!a) return;
     const trackSrc = AMBIENCE_TRACKS.find(t => t.id === p.track)?.src;
     if (!trackSrc) return;
@@ -121,7 +130,15 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
     const promise = a.play();
     if (promise && typeof promise.then === "function") {
       promise.then(() => setNeedsUnlock(false))
-             .catch(() => setNeedsUnlock(true));
+             .catch((error) => {
+               console.warn("[CalmCampus audio] Ambience playback failed", {
+                 track: p.track,
+                 src: trackSrc,
+                 error,
+               });
+               setIsPlaying(false);
+               setNeedsUnlock(true);
+             });
     }
   }, [ensureAudio]);
 
@@ -132,7 +149,8 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
     if (currentUserRef.current && currentUserRef.current !== userId) {
       stopAudio();
       pausedForSessionRef.current = false;
-      wasOnBeforeSessionRef.current = false;
+      wasPlayingBeforeSessionRef.current = false;
+      userTurnedOffDuringSessionRef.current = false;
     }
     currentUserRef.current = userId;
     if (!userId) {
@@ -160,6 +178,10 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
     savePrefs(userId, prefs);
   }, [prefs, userId, ready]);
 
+  useEffect(() => {
+    prefsRef.current = prefs;
+  }, [prefs]);
+
   // Keep volume in sync live
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = prefs.volume;
@@ -168,17 +190,33 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
   // Listen for breathing session events
   useEffect(() => {
     const onBreathStart = () => {
+      if (pausedForSessionRef.current) return;
       const a = audioRef.current;
-      wasOnBeforeSessionRef.current = prefs.on && !!a && !a.paused;
+      const currentPrefs = prefsRef.current;
+      wasPlayingBeforeSessionRef.current = currentPrefs.on && !!a && !a.paused;
+      userTurnedOffDuringSessionRef.current = false;
       pausedForSessionRef.current = true;
       if (a) { try { a.pause(); } catch { } }
     };
     const onBreathEnd = () => {
       if (!pausedForSessionRef.current) return;
+      const currentPrefs = prefsRef.current;
+      const shouldResume =
+        wasPlayingBeforeSessionRef.current &&
+        !userTurnedOffDuringSessionRef.current &&
+        currentPrefs.on;
       pausedForSessionRef.current = false;
-      if (wasOnBeforeSessionRef.current && prefs.on && userId) {
-        const a = ensureAudio(); if (!a) return;
-        try { void a.play(); } catch { }
+      wasPlayingBeforeSessionRef.current = false;
+      userTurnedOffDuringSessionRef.current = false;
+      if (shouldResume) {
+        try {
+          playCurrent(currentPrefs);
+        } catch (error) {
+          console.warn("[CalmCampus audio] Ambience resume after session failed", {
+            track: currentPrefs.track,
+            error,
+          });
+        }
       }
     };
     window.addEventListener("calmcampus:breath:start", onBreathStart);
@@ -187,7 +225,7 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("calmcampus:breath:start", onBreathStart);
       window.removeEventListener("calmcampus:breath:end", onBreathEnd);
     };
-  }, [prefs.on, userId, ensureAudio]);
+  }, [playCurrent]);
 
   // First user interaction unlocks audio if it was blocked
   useEffect(() => {
@@ -207,7 +245,7 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
     setPrefs(prev => {
       const next = { ...prev, track: t, on: true };
       stopAudio();
-      setTimeout(() => playCurrent(next), 0);
+      if (!pausedForSessionRef.current) setTimeout(() => playCurrent(next), 0);
       return next;
     });
   }, [stopAudio, playCurrent]);
@@ -215,8 +253,12 @@ export function AmbienceProvider({ children }: { children: React.ReactNode }) {
   const setOn = useCallback((on: boolean) => {
     setPrefs(prev => {
       const next = { ...prev, on };
-      if (!on) stopAudio();
-      else setTimeout(() => playCurrent(next), 0);
+      if (!on) {
+        if (pausedForSessionRef.current) userTurnedOffDuringSessionRef.current = true;
+        stopAudio();
+      } else if (!pausedForSessionRef.current) {
+        setTimeout(() => playCurrent(next), 0);
+      }
       return next;
     });
   }, [stopAudio, playCurrent]);

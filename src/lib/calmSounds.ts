@@ -1,13 +1,17 @@
 // Soft Web Audio engine scoped to Quick Calm Tools.
 // Respects the user's sound setting (read live from storage on each call).
 import { getCurrentUser } from "@/lib/storage";
-import boxBreathingMp3 from "@/assets/box-breathing.mp3";
 
 let _ctx: AudioContext | null = null;
 let _ambientNodes: { stop: () => void } | null = null;
+let _cozyAmbientActive = false;
 let _noiseBuffer: AudioBuffer | null = null;
 let _breathAudio: HTMLAudioElement | null = null;
+let _breathingSessionActive = false;
+let _breathingSessionPaused = false;
+let _breathingPlayToken = 0;
 const _active = new Set<{ stop: () => void }>();
+const BREATHING_SESSION_AUDIO_SRC = "/audio/calm/breathing-session.mp3";
 
 
 function ctx(): AudioContext | null {
@@ -159,13 +163,25 @@ function ensureBreathAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null;
   if (_breathAudio) return _breathAudio;
   try {
-    const a = new Audio(boxBreathingMp3);
+    const a = new Audio(BREATHING_SESSION_AUDIO_SRC);
     a.loop = true;
     a.preload = "auto";
-    a.volume = 0.4;
+    a.volume = 0.85;
+    a.addEventListener("error", () => {
+      console.warn("[CalmCampus audio] Breathing session audio failed to load", {
+        src: a.currentSrc || a.src || BREATHING_SESSION_AUDIO_SRC,
+        error: a.error ? { code: a.error.code, message: a.error.message } : null,
+      });
+    });
     _breathAudio = a;
     return a;
-  } catch { return null; }
+  } catch (error) {
+    console.warn("[CalmCampus audio] Could not create breathing session audio", {
+      src: BREATHING_SESSION_AUDIO_SRC,
+      error,
+    });
+    return null;
+  }
 }
 
 function dispatchBreath(ev: "start" | "end") {
@@ -173,29 +189,127 @@ function dispatchBreath(ev: "start" | "end") {
   try { window.dispatchEvent(new Event(`calmcampus:breath:${ev}`)); } catch {}
 }
 
+export async function prepareBreathingSessionAudio(): Promise<void> {
+  if (!soundOn()) return;
+  await resumeAudio();
+  const a = ensureBreathAudio();
+  if (!a) return;
+  try {
+    a.load();
+    const prevMuted = a.muted;
+    const prevVolume = a.volume;
+    a.muted = true;
+    a.volume = 0;
+    const p = a.play();
+    if (p && typeof p.then === "function") await p;
+    a.pause();
+    a.currentTime = 0;
+    a.muted = prevMuted;
+    a.volume = prevVolume || 0.85;
+  } catch (error) {
+    try {
+      a.muted = false;
+      a.volume = 0.85;
+      a.currentTime = 0;
+    } catch {}
+    console.warn("[CalmCampus audio] Breathing session audio unlock was blocked", {
+      src: BREATHING_SESSION_AUDIO_SRC,
+      error,
+    });
+  }
+}
+
 export function startBreathingSession() {
+  if (_breathingSessionActive) {
+    if (_breathingSessionPaused) resumeBreathingSession();
+    return;
+  }
+  _breathingSessionActive = true;
+  _breathingSessionPaused = false;
+  const playToken = ++_breathingPlayToken;
   dispatchBreath("start");
   if (!soundOn()) return;
   const a = ensureBreathAudio(); if (!a) return;
   try {
     a.currentTime = 0;
-    a.volume = 0.4;
-    void a.play();
-  } catch {}
+    a.muted = false;
+    a.volume = 0.85;
+    const p = a.play();
+    if (p && typeof p.then === "function") {
+      p.catch((error) => {
+        if (playToken !== _breathingPlayToken) return;
+        console.warn("[CalmCampus audio] Breathing session audio playback failed", {
+          src: BREATHING_SESSION_AUDIO_SRC,
+          error,
+        });
+        stopBreathingSession();
+      });
+    }
+  } catch (error) {
+    console.warn("[CalmCampus audio] Breathing session audio playback failed", {
+      src: BREATHING_SESSION_AUDIO_SRC,
+      error,
+    });
+    stopBreathingSession();
+  }
 }
 export function pauseBreathingSession() {
+  if (!_breathingSessionActive) return;
+  _breathingSessionPaused = true;
   if (!_breathAudio) return;
   try { _breathAudio.pause(); } catch {}
 }
 export function resumeBreathingSession() {
+  if (!_breathingSessionActive) return;
   if (!soundOn()) return;
   if (!_breathAudio) return;
-  try { void _breathAudio.play(); } catch {}
+  _breathingSessionPaused = false;
+  const playToken = ++_breathingPlayToken;
+  try {
+    const p = _breathAudio.play();
+    if (p && typeof p.then === "function") {
+      p.catch((error) => {
+        if (playToken !== _breathingPlayToken) return;
+        _breathingSessionPaused = true;
+        console.warn("[CalmCampus audio] Breathing session audio resume failed", {
+          src: BREATHING_SESSION_AUDIO_SRC,
+          error,
+        });
+      });
+    }
+  } catch (error) {
+    _breathingSessionPaused = true;
+    console.warn("[CalmCampus audio] Breathing session audio resume failed", {
+      src: BREATHING_SESSION_AUDIO_SRC,
+      error,
+    });
+  }
+}
+export function restartBreathingSession() {
+  if (!_breathingSessionActive) {
+    startBreathingSession();
+    return;
+  }
+  if (!_breathAudio) return;
+  try {
+    _breathAudio.currentTime = 0;
+    if (!_breathingSessionPaused && soundOn()) void _breathAudio.play();
+  } catch (error) {
+    console.warn("[CalmCampus audio] Breathing session audio restart failed", {
+      src: BREATHING_SESSION_AUDIO_SRC,
+      error,
+    });
+  }
 }
 export function stopBreathingSession() {
-  dispatchBreath("end");
-  if (!_breathAudio) return;
-  try { _breathAudio.pause(); _breathAudio.currentTime = 0; } catch {}
+  const wasActive = _breathingSessionActive;
+  _breathingSessionActive = false;
+  _breathingSessionPaused = false;
+  _breathingPlayToken++;
+  if (_breathAudio) {
+    try { _breathAudio.pause(); _breathAudio.currentTime = 0; } catch {}
+  }
+  if (wasActive) dispatchBreath("end");
 }
 
 
@@ -203,6 +317,8 @@ export function startCozyAmbient() {
   if (!soundOn()) return;
   stopCozyAmbient();
   const c = ctx(); if (!c) return;
+  _cozyAmbientActive = true;
+  dispatchBreath("start");
   const t0 = c.currentTime;
   const nodes: any[] = [];
   [220, 277, 330].forEach((f, i) => {
@@ -231,6 +347,10 @@ export function startCozyAmbient() {
 
 export function stopCozyAmbient() {
   if (_ambientNodes) { try { _ambientNodes.stop(); } catch {} _ambientNodes = null; }
+  if (_cozyAmbientActive) {
+    _cozyAmbientActive = false;
+    dispatchBreath("end");
+  }
 }
 
 // Sidecar storage for calm progress (points, garden, rewards) per user.

@@ -3,7 +3,7 @@ import { ProtectedLayout, BackButton, useApp } from "@/components/AppShell";
 import { Fox } from "@/components/fox/Fox";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { todayStr, updateCurrentUserData } from "@/lib/storage";
-import { calmSfx, startCozyAmbient, stopCozyAmbient, loadCalm, addCalm, resumeAudio, stopPhaseSounds, startBreathingSession, pauseBreathingSession, resumeBreathingSession, stopBreathingSession, type CalmProgress } from "@/lib/calmSounds";
+import { calmSfx, startCozyAmbient, stopCozyAmbient, loadCalm, addCalm, resumeAudio, stopPhaseSounds, startBreathingSession, pauseBreathingSession, prepareBreathingSessionAudio, restartBreathingSession, resumeBreathingSession, type CalmProgress } from "@/lib/calmSounds";
 
 /* ============ BOX BREATHING ENGINE ============
  * Single timestamp-based source of truth shared by every breathing UI:
@@ -50,6 +50,7 @@ function useBoxBreathing({ totalRounds, paused, withSound, onComplete, restartKe
   const pausedAtRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const doneRef = useRef(false);
+  const didMountRestartRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -65,7 +66,10 @@ function useBoxBreathing({ totalRounds, paused, withSound, onComplete, restartKe
     phaseStartRef.current = performance.now();
     pausedAtRef.current = null;
     setState({ phaseIdx: 0, progress: 0, remaining: 4, round: 0, breath: 0 });
-    if (withSound) { stopBreathingSession(); startBreathingSession(); }
+    if (withSound) {
+      if (didMountRestartRef.current) restartBreathingSession();
+      didMountRestartRef.current = true;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restartKey]);
 
@@ -84,8 +88,13 @@ function useBoxBreathing({ totalRounds, paused, withSound, onComplete, restartKe
   }, [paused]);
 
   useEffect(() => {
-    phaseStartRef.current = performance.now();
     if (withSound) startBreathingSession();
+    return () => { if (withSound) stopPhaseSounds(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withSound]);
+
+  useEffect(() => {
+    phaseStartRef.current = performance.now();
 
 
     const tick = () => {
@@ -124,7 +133,6 @@ function useBoxBreathing({ totalRounds, paused, withSound, onComplete, restartKe
     rafRef.current = requestAnimationFrame(tick);
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-      if (withSound) stopPhaseSounds();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restartKey]);
@@ -316,7 +324,7 @@ function BreatheIntro({ onYes, onNo }: { onYes: ()=>void; onNo: ()=>void }) {
           <Bubble>Hey... your heart seems fast. Mine too sometimes.</Bubble>
           <Bubble delay={500}>Want to slow down together?</Bubble>
           <div className="mt-4 flex gap-2 flex-wrap">
-            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); calmSfx.boop(); startCozyAmbient(); startBreathingSession(); onYes(); }}>Yes, let’s do it 🤍</button>
+            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); calmSfx.boop(); onYes(); }}>Yes, let’s do it 🤍</button>
             <button className="btn-ghost" onClick={onNo}>Maybe later</button>
           </div>
         </div>
@@ -966,7 +974,7 @@ function EmergencyIntro({ onBreathe, onBack }: { onBreathe: ()=>void; onBack: ()
             <p className="font-display text-xl">It’s okay. Let’s stop and breathe first.</p>
           </div>
           <div className="mt-4">
-            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); calmSfx.boop(); startCozyAmbient(); startBreathingSession(); onBreathe(); }}>Breathe with Foxy 🤍</button>
+            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); calmSfx.boop(); onBreathe(); }}>Breathe with Foxy 🤍</button>
           </div>
         </div>
       </div>
