@@ -193,8 +193,8 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
       {/* sidebar desktop */}
-      <aside className={`${sidebarOpen ? "hidden md:flex" : "hidden"} w-64 flex-col p-5 gap-2 sticky top-0 h-screen`}
-             style={{ background: "color-mix(in oklab, var(--sidebar) 90%, transparent)", borderRight: "1px solid color-mix(in oklab, var(--rose) 15%, transparent)" }}>
+      <aside className={`hidden md:flex shrink-0 flex-col sticky top-0 h-screen overflow-hidden transition-all duration-200 ease-out ${sidebarOpen ? "w-64 p-5 gap-2 opacity-100" : "w-0 p-0 gap-0 opacity-0 pointer-events-none"}`}
+             style={{ background: "color-mix(in oklab, var(--sidebar) 90%, transparent)", borderRight: sidebarOpen ? "1px solid color-mix(in oklab, var(--rose) 15%, transparent)" : "0 solid transparent" }}>
         <Link to="/dashboard" className="flex items-center gap-2 px-2 py-3">
           <span className="text-2xl font-display font-bold" style={{ color: "var(--rose)" }}>CalmCampus</span>
           <span>🌸</span>
@@ -223,11 +223,11 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* header */}
-        <header className="sticky top-0 z-30 glass px-4 md:px-8 py-3 flex items-center gap-3 justify-between">
+        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3 flex items-center gap-3 overflow-hidden transition-all duration-200 ease-out ${sidebarOpen ? "glass justify-between" : "justify-start bg-transparent shadow-none border-transparent backdrop-blur-0"}`}>
           <button className="btn-ghost !py-2 !px-3" onClick={toggleSidebar} aria-label="Menu" aria-expanded={sidebarOpen}>☰</button>
-          <div className="font-display text-lg hidden md:block">Hello, {user.profile.username} ✿</div>
-          <div className="md:hidden font-display text-base">CalmCampus 🌸</div>
-          <div className="flex items-center gap-1.5">
+          <div className={`font-display text-lg hidden md:block overflow-hidden whitespace-nowrap transition-all duration-200 ease-out ${sidebarOpen ? "opacity-100 max-w-xs" : "opacity-0 max-w-0 pointer-events-none"}`}>Hello, {user.profile.username} ✿</div>
+          <div className={`md:hidden font-display text-base overflow-hidden whitespace-nowrap transition-all duration-200 ease-out ${sidebarOpen ? "opacity-100 max-w-xs" : "opacity-0 max-w-0 pointer-events-none"}`}>CalmCampus 🌸</div>
+          <div className={`flex items-center gap-1.5 overflow-hidden transition-all duration-200 ease-out ${sidebarOpen ? "opacity-100 max-w-[52rem]" : "opacity-0 max-w-0 pointer-events-none"}`}>
             <button className="btn-ghost !py-2 !px-3" onClick={toggleSound}>{user.data.settings.sound ? "🔊 Sound On" : "🔈 Sound Off"}</button>
             <AmbienceControl />
             <button className="btn-ghost !py-2 !px-3 hidden sm:inline-flex" onClick={toggleSoft}>{user.data.settings.softMode ? "🌙 Soft" : "✨ Soft Mode"}</button>
