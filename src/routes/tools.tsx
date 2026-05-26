@@ -324,7 +324,7 @@ function BreatheIntro({ onYes, onNo }: { onYes: ()=>void; onNo: ()=>void }) {
           <Bubble>Hey... your heart seems fast. Mine too sometimes.</Bubble>
           <Bubble delay={500}>Want to slow down together?</Bubble>
           <div className="mt-4 flex gap-2 flex-wrap">
-            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); calmSfx.boop(); onYes(); }}>Yes, let’s do it 🤍</button>
+            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); calmSfx.boop(); startBreathingSession(); onYes(); }}>Yes, let’s do it 🤍</button>
             <button className="btn-ghost" onClick={onNo}>Maybe later</button>
           </div>
         </div>
@@ -692,7 +692,7 @@ function BreatheEnd({ onBack, onRetry }: { onBack: ()=>void; onRetry: ()=>void }
         <p className="text-muted-foreground mt-2">You did 5 cycles · Calm points +30</p>
         <div className="flex flex-wrap gap-2 mt-4">
           <button className="btn-rose" onClick={()=>{ calmSfx.boop(); onBack(); }}>Yes 🤍</button>
-          <button className="btn-ghost" onClick={onRetry}>Not really — one more round</button>
+          <button className="btn-ghost" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); startBreathingSession(); onRetry(); }}>Not really — one more round</button>
         </div>
       </div>
     </div>
@@ -974,7 +974,7 @@ function EmergencyIntro({ onBreathe, onBack }: { onBreathe: ()=>void; onBack: ()
             <p className="font-display text-xl">It’s okay. Let’s stop and breathe first.</p>
           </div>
           <div className="mt-4">
-            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); calmSfx.boop(); onBreathe(); }}>Breathe with Foxy 🤍</button>
+            <button className="btn-rose" onClick={async ()=>{ await resumeAudio(); await prepareBreathingSessionAudio(); calmSfx.boop(); startBreathingSession(); onBreathe(); }}>Breathe with Foxy 🤍</button>
           </div>
         </div>
       </div>

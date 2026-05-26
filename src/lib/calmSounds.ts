@@ -1,5 +1,5 @@
 // Soft Web Audio engine scoped to Quick Calm Tools.
-// Respects the user's sound setting (read live from storage on each call).
+// UI SFX and generated cozy ambience respect the user's sound setting.
 import { getCurrentUser } from "@/lib/storage";
 
 let _ctx: AudioContext | null = null;
@@ -12,6 +12,14 @@ let _breathingSessionPaused = false;
 let _breathingPlayToken = 0;
 const _active = new Set<{ stop: () => void }>();
 const BREATHING_SESSION_AUDIO_SRC = "/audio/calm/breathing-session.mp3";
+
+function breathingDebug(...args: unknown[]) {
+  if (import.meta.env.DEV) console.log("[BreathingAudio]", ...args);
+}
+
+function breathingWarn(message: string, detail?: unknown) {
+  console.warn("[BreathingAudio]", message, detail ?? "");
+}
 
 
 function ctx(): AudioContext | null {
@@ -168,7 +176,7 @@ function ensureBreathAudio(): HTMLAudioElement | null {
     a.preload = "auto";
     a.volume = 0.85;
     a.addEventListener("error", () => {
-      console.warn("[CalmCampus audio] Breathing session audio failed to load", {
+      breathingWarn("load/error event", {
         src: a.currentSrc || a.src || BREATHING_SESSION_AUDIO_SRC,
         error: a.error ? { code: a.error.code, message: a.error.message } : null,
       });
@@ -176,7 +184,7 @@ function ensureBreathAudio(): HTMLAudioElement | null {
     _breathAudio = a;
     return a;
   } catch (error) {
-    console.warn("[CalmCampus audio] Could not create breathing session audio", {
+    breathingWarn("could not create audio element", {
       src: BREATHING_SESSION_AUDIO_SRC,
       error,
     });
@@ -190,29 +198,26 @@ function dispatchBreath(ev: "start" | "end") {
 }
 
 export async function prepareBreathingSessionAudio(): Promise<void> {
-  if (!soundOn()) return;
   await resumeAudio();
   const a = ensureBreathAudio();
   if (!a) return;
   try {
     a.load();
-    const prevMuted = a.muted;
-    const prevVolume = a.volume;
-    a.muted = true;
-    a.volume = 0;
-    const p = a.play();
-    if (p && typeof p.then === "function") await p;
-    a.pause();
-    a.currentTime = 0;
-    a.muted = prevMuted;
-    a.volume = prevVolume || 0.85;
+    a.muted = false;
+    a.volume = 0.85;
+    breathingDebug("prepared", {
+      src: a.currentSrc || a.src || BREATHING_SESSION_AUDIO_SRC,
+      volume: a.volume,
+      muted: a.muted,
+      readyState: a.readyState,
+    });
   } catch (error) {
     try {
       a.muted = false;
       a.volume = 0.85;
       a.currentTime = 0;
     } catch {}
-    console.warn("[CalmCampus audio] Breathing session audio unlock was blocked", {
+    breathingWarn("prepare failed", {
       src: BREATHING_SESSION_AUDIO_SRC,
       error,
     });
@@ -224,29 +229,35 @@ export function startBreathingSession() {
     if (_breathingSessionPaused) resumeBreathingSession();
     return;
   }
+  breathingDebug("session start");
   _breathingSessionActive = true;
   _breathingSessionPaused = false;
   const playToken = ++_breathingPlayToken;
   dispatchBreath("start");
-  if (!soundOn()) return;
   const a = ensureBreathAudio(); if (!a) return;
   try {
     a.currentTime = 0;
     a.muted = false;
     a.volume = 0.85;
+    breathingDebug("src:", a.currentSrc || a.src || BREATHING_SESSION_AUDIO_SRC);
+    breathingDebug("volume:", a.volume, "muted:", a.muted);
+    breathingDebug("readyState:", a.readyState);
+    breathingDebug("calling play()");
     const p = a.play();
     if (p && typeof p.then === "function") {
-      p.catch((error) => {
-        if (playToken !== _breathingPlayToken) return;
-        console.warn("[CalmCampus audio] Breathing session audio playback failed", {
-          src: BREATHING_SESSION_AUDIO_SRC,
-          error,
+      p.then(() => {
+        if (playToken === _breathingPlayToken) breathingDebug("play success");
+      }).catch((error) => {
+          if (playToken !== _breathingPlayToken) return;
+          breathingWarn("play failed", {
+            src: BREATHING_SESSION_AUDIO_SRC,
+            error,
+          });
+          stopBreathingSession();
         });
-        stopBreathingSession();
-      });
     }
   } catch (error) {
-    console.warn("[CalmCampus audio] Breathing session audio playback failed", {
+    breathingWarn("play failed", {
       src: BREATHING_SESSION_AUDIO_SRC,
       error,
     });
@@ -261,7 +272,6 @@ export function pauseBreathingSession() {
 }
 export function resumeBreathingSession() {
   if (!_breathingSessionActive) return;
-  if (!soundOn()) return;
   if (!_breathAudio) return;
   _breathingSessionPaused = false;
   const playToken = ++_breathingPlayToken;
@@ -271,7 +281,7 @@ export function resumeBreathingSession() {
       p.catch((error) => {
         if (playToken !== _breathingPlayToken) return;
         _breathingSessionPaused = true;
-        console.warn("[CalmCampus audio] Breathing session audio resume failed", {
+        breathingWarn("resume failed", {
           src: BREATHING_SESSION_AUDIO_SRC,
           error,
         });
@@ -279,7 +289,7 @@ export function resumeBreathingSession() {
     }
   } catch (error) {
     _breathingSessionPaused = true;
-    console.warn("[CalmCampus audio] Breathing session audio resume failed", {
+    breathingWarn("resume failed", {
       src: BREATHING_SESSION_AUDIO_SRC,
       error,
     });
@@ -293,9 +303,9 @@ export function restartBreathingSession() {
   if (!_breathAudio) return;
   try {
     _breathAudio.currentTime = 0;
-    if (!_breathingSessionPaused && soundOn()) void _breathAudio.play();
+    if (!_breathingSessionPaused) void _breathAudio.play();
   } catch (error) {
-    console.warn("[CalmCampus audio] Breathing session audio restart failed", {
+    breathingWarn("restart failed", {
       src: BREATHING_SESSION_AUDIO_SRC,
       error,
     });
@@ -309,6 +319,7 @@ export function stopBreathingSession() {
   if (_breathAudio) {
     try { _breathAudio.pause(); _breathAudio.currentTime = 0; } catch {}
   }
+  if (wasActive) breathingDebug("session end cleanup");
   if (wasActive) dispatchBreath("end");
 }
 
