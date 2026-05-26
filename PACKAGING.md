@@ -44,12 +44,19 @@ The Android app uses Capacitor with:
 App name: CalmCampus
 Package id: com.calmcampus.app
 Live app URL: https://calmcampus.onrender.com
+Orientation: sensorLandscape
 ```
 
 First-time Android project setup:
 
 ```powershell
 npx cap add android
+```
+
+Force the APK to open and remain in landscape orientation:
+
+```powershell
+npm run android:landscape
 ```
 
 Sync the wrapper configuration:

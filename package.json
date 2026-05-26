@@ -21,6 +21,7 @@
     "cap:add:android": "cap add android",
     "cap:sync": "cross-env PUBLIC_APP_URL=https://calmcampus.onrender.com cap sync android",
     "cap:open": "cap open android",
+    "android:landscape": "node scripts/patch-android-landscape.cjs",
     "electron:dev": "cross-env PUBLIC_APP_URL=https://calmcampus.onrender.com electron .",
     "electron:build": "cross-env PUBLIC_APP_URL=https://calmcampus.onrender.com electron-builder --win nsis"
   },
