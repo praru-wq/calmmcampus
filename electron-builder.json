@@ -1,0 +1,26 @@
+{
+  "appId": "com.calmcampus.app",
+  "productName": "CalmCampus",
+  "directories": {
+    "output": "release",
+    "buildResources": "resources"
+  },
+  "files": [
+    "electron/**/*",
+    "resources/**/*",
+    "package.json"
+  ],
+  "win": {
+    "target": ["nsis"],
+    "icon": "resources/icon.png",
+    "signAndEditExecutable": false,
+    "artifactName": "CalmCampus-Setup-${version}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "CalmCampus"
+  }
+}
