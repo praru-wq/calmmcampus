@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="260" viewBox="0 0 1000 260" role="img" aria-label="CalmCampus product architecture">
+<rect width="1000" height="260" rx="24" fill="#f8fafc"/><g font-family="Segoe UI,Arial,sans-serif">
+<text x="500" y="38" text-anchor="middle" font-size="21" font-weight="700" fill="#17365d">One calm experience across three platforms</text>
+<g><rect x="45" y="78" width="210" height="112" rx="18" fill="#ede9fe" stroke="#7c3aed"/><text x="150" y="118" text-anchor="middle" font-size="22" font-weight="700" fill="#4c1d95">React Web App</text><text x="150" y="150" text-anchor="middle" font-size="16" fill="#4b5563">Planning • Calm tools</text><text x="150" y="174" text-anchor="middle" font-size="16" fill="#4b5563">Talk assistant • Storage</text></g>
+<path d="M255 134h104" stroke="#64748b" stroke-width="3"/><path d="m350 126 14 8-14 8" fill="#64748b"/>
+<g><rect x="370" y="78" width="260" height="112" rx="18" fill="#d1fae5" stroke="#0f766e"/><text x="500" y="118" text-anchor="middle" font-size="22" font-weight="700" fill="#115e59">Shared Product Core</text><text x="500" y="150" text-anchor="middle" font-size="16" fill="#4b5563">Responsive UI • Local data</text><text x="500" y="174" text-anchor="middle" font-size="16" fill="#4b5563">Safety-aware support</text></g>
+<path d="M630 134h104" stroke="#64748b" stroke-width="3"/><path d="m725 126 14 8-14 8" fill="#64748b"/>
+<g><rect x="745" y="78" width="210" height="112" rx="18" fill="#dbeafe" stroke="#2563eb"/><text x="850" y="116" text-anchor="middle" font-size="20" font-weight="700" fill="#1e3a8a">Native Wrappers</text><text x="850" y="149" text-anchor="middle" font-size="16" fill="#4b5563">Electron for Windows</text><text x="850" y="174" text-anchor="middle" font-size="16" fill="#4b5563">Capacitor for Android</text></g>
+</g></svg>
