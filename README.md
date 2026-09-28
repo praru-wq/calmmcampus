@@ -1,151 +1,67 @@
-# CalmCampus
+<p align="center">
+  <img src="docs/assets/calmcampus-banner.svg" alt="CalmCampus banner" width="100%" />
+</p>
 
-CalmCampus is a student wellness and study planning web application built using React and Vite. It is designed to help students plan their study time, manage saved study plans, use calming tools, listen to ambience audio, and talk with a supportive counselling-style Talk Assistant.
+<p align="center">
+  <a href="https://calmcampus.onrender.com"><strong>Open the live app</strong></a>
+  &nbsp;•&nbsp;
+  <a href="#product-highlights">Highlights</a>
+  &nbsp;•&nbsp;
+  <a href="#run-locally">Run locally</a>
+</p>
 
-## Objective
+<p align="center">
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111827">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white">
+  <img alt="Electron" src="https://img.shields.io/badge/Desktop-Electron-47848F?logo=electron&logoColor=white">
+  <img alt="Capacitor" src="https://img.shields.io/badge/Android-Capacitor-119EFF?logo=capacitor&logoColor=white">
+</p>
 
-The main objective of this project is to create a simple and calming digital space for students where they can organize study tasks, reduce stress, and get emotional and study-related support while studying.
+## The idea
 
-CalmCampus combines study planning, relaxation tools, ambience sound, and a counselling-style Talk Assistant in one platform. It helps students not only make study plans, but also stay calm, motivated, and focused.
+Students often use separate tools for timetables, saved study plans, calming exercises, background audio, and emotional support. **CalmCampus brings those needs into one focused workspace** designed to reduce setup friction and help students move from feeling overwhelmed to taking the next useful step.
 
-## Features
+This project demonstrates end-to-end product thinking: problem framing, responsive interface design, user-scoped local data, a safety-aware support experience, deployment, and packaging for web, Windows, and Android.
 
-- Login and register system
-- User-specific local data
-- Dashboard
-- Single Planner
-- Detailed Planner
-- Saved plans
-- Talk Assistant
-- Quick Calm Tools
-- Breathing tool
-- Background ambience audio
-- Soft mode and sound controls
-- Windows desktop app version
-- Android APK version
+## Product highlights
 
-## How to Use
+| Experience | What it delivers |
+| --- | --- |
+| **Quick Planner** | Turns a small set of inputs into a focused study plan |
+| **Detailed Planner** | Supports multiple subjects, longer sessions, and structured exam preparation |
+| **Saved Plans** | Keeps plans available per user without requiring a database |
+| **Talk Assistant** | Offers supportive, practical study guidance with clear safety boundaries |
+| **Quick Calm Tools** | Provides breathing and grounding exercises for stressful study moments |
+| **Ambience and Soft Mode** | Creates a gentler, less distracting study environment |
+| **Cross-platform access** | Runs on the web and is packaged for Windows and Android |
 
-### 1. Login / Register
+<p align="center">
+  <img src="docs/assets/product-architecture.svg" alt="CalmCampus product architecture" width="92%" />
+</p>
 
-Users can create an account or log in to access their personal dashboard. The app keeps user data separate so each user can have their own saved plans and settings.
+## Engineering decisions
 
-### 2. Dashboard
+- **Local-first persistence:** user plans and preferences stay in browser storage, keeping the prototype simple and fast.
+- **Shared product core:** React and TypeScript power the main experience across all supported platforms.
+- **Thin native wrappers:** Electron and Capacitor reuse the deployed web experience instead of maintaining separate applications.
+- **Server-managed provider keys:** API credentials are handled through the deployment environment and are not stored in frontend code.
+- **Responsive interaction design:** the interface adapts to desktop and mobile use while maintaining a calm visual language.
 
-The dashboard gives a quick view of the main features. From here, users can open the planner, Talk Assistant, or Quick Calm Tools.
+## Technology
 
-### 3. Single Planner
+`React` · `TypeScript` · `Vite` · `Tailwind CSS` · `TanStack Router` · `LocalStorage` · `Electron` · `Capacitor` · `Render`
 
-The Single Planner is useful when the user wants to create a study plan quickly.
+## Run locally
 
-It is best for:
-
-- Quick study planning
-- Simple daily schedules
-- Fast revision plans
-- Times when the user wants an easy planner
-- Students who do not want too many options
-
-The user can enter the study details, and the planner helps create a simple study plan. This is useful when the student wants to start studying without spending too much time setting up a detailed schedule.
-
-### 4. Detailed Planner
-
-The Detailed Planner is for users who want more control and more options while making a study plan.
-
-It is best for:
-
-- More customized planning
-- Multiple subjects or tasks
-- Longer study sessions
-- Detailed exam preparation
-- More organized study schedules
-- Students who want extra options and better control
-
-This planner gives more flexibility compared to the Single Planner. It is useful when the student has many topics, subjects, or tasks to manage and wants a more structured plan.
-
-### 5. Saved Plans
-
-Users can save their generated plans and view them later. This helps students keep track of their study schedules without creating the same plan again.
-
-### 6. Talk Assistant
-
-The Talk Assistant is a chatbot-style counselling and student support feature. It is designed to respond in a calm, understanding, and supportive way, similar to a friendly counsellor or psychologist-style study companion.
-
-Users can type anything they are feeling or struggling with, and the assistant gives helpful, comforting, and practical responses.
-
-It can help with:
-
-- Study stress
-- Exam fear
-- Lack of motivation
-- Feeling overwhelmed
-- Planning doubts
-- Emotional support
-- General student problems
-- Simple subject or study-related questions
-- Revision guidance
-- Study routine suggestions
-
-Examples:
-
-- “I don’t feel like studying.”
-- “I am stressed about exams.”
-- “I feel like I wasted the whole day.”
-- “Help me plan for tomorrow.”
-- “I feel anxious.”
-- “I have too many chapters left.”
-- “I need motivation.”
-- “I don’t know where to start.”
-- “How should I revise this subject?”
-
-The Talk Assistant is not a replacement for a real doctor, therapist, or professional counsellor, but it is made to provide supportive guidance and help students feel less alone while studying.
-
-### 7. Quick Calm Tools
-
-Quick Calm Tools are made to help users calm down quickly when they feel stressed, anxious, distracted, or overwhelmed.
-
-These tools include calming exercises such as breathing and grounding activities. They are useful before studying, during breaks, or whenever the user feels mentally tired.
-
-### 8. Ambience Audio
-
-The app includes background ambience audio to create a calm study environment. Users can turn sound on or off based on preference.
-
-### 9. Soft Mode
-
-Soft Mode gives the app a more gentle and calm experience. It is useful for students who prefer a softer, less distracting interface while studying.
-
-## Technologies Used
-
-- React
-- Vite
-- TypeScript
-- Tailwind CSS
-- LocalStorage
-- Render for deployment
-- Electron for Windows app
-- Capacitor for Android APK
-
-## Live Website
-
-https://calmcampus.onrender.com
-
-## Installation
-
-Install project dependencies:
+Prerequisites: Node.js 22.12 or newer.
 
 ```bash
+git clone https://github.com/praru-wq/calmmcampus.git
+cd calmmcampus
 npm install
-```
-
-## Run Locally
-
-Start the development server:
-
-```bash
 npm run dev
 ```
-
-## Build
 
 Create a production build:
 
@@ -153,18 +69,18 @@ Create a production build:
 npm run build
 ```
 
-## Windows App
+## Platform packaging
 
-The Windows desktop app is created using Electron. It loads the deployed CalmCampus website inside a desktop app window.
+- **Windows:** `npm run electron:dev` for local testing and `npm run electron:build` for an installer build.
+- **Android:** use the Capacitor scripts in `package.json` to sync and open the Android project.
+- Both native wrappers load the deployed application, so they require an internet connection.
 
-## Android App
+## Responsible use
 
-The Android APK is created using Capacitor. It is mainly designed for Android tablets and opens in landscape mode for a better view of the interface.
+The Talk Assistant provides general emotional and study support. It is not a replacement for a doctor, therapist, counsellor, or emergency service.
 
-## Notes
+## Project role
 
-The app stores user data locally in the browser using localStorage.
+Designed and developed by **Prarthana** as a student product exploring how thoughtful software can support learning, focus, and wellbeing.
 
-The Windows and Android app versions load the deployed CalmCampus website, so internet connection is required for the app versions to work properly.
-
-API keys are not stored inside the frontend app. Provider keys are handled through the deployed server environment.
+<p align="center"><sub>Built with curiosity, empathy, and a product-first mindset.</sub></p>
